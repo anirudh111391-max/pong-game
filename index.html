@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Pong Game</title>
+    <style>
+        body { display: flex; justify-content: center; align-items: center; height: 100vh; background: black; }
+        canvas { border: 1px solid white; }
+        #score { color: white; font-size: 20px; position: absolute; top: 10px; }
+    </style>
+</head>
+<body>
+    <div id="score"></div>
+    <canvas id="pong" width="800" height="400"></canvas>
+    <script>
+        const canvas = document.getElementById("pong");
+        const ctx = canvas.getContext("2d");
+
+        // Create the pong paddle
+        const paddleWidth = 10, paddleHeight = 100;
+        const leftPaddle = { x: 0, y: canvas.height / 2 - paddleHeight / 2, width: paddleWidth, height: paddleHeight, color: "white" };
+        const rightPaddle = { x: canvas.width - paddleWidth, y: canvas.height / 2 - paddleHeight / 2, width: paddleWidth, height: paddleHeight, color: "white" };
+
+        // Create the pong ball
+        const ball = { x: canvas.width / 2, y: canvas.height / 2, radius: 10, speed: 5, dx: 5, dy: 5, color: "white" };
+
+        // Control the paddles
+        let leftPaddleY = leftPaddle.y;
+        let rightPaddleY = rightPaddle.y;
+        let score = { left: 0, right: 0 };
+
+        function drawRect(x, y, width, height, color) {
+            ctx.fillStyle = color;
+            ctx.fillRect(x, y, width, height);
+        }
+
+        function drawBall(x, y, radius, color) {
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.arc(x, y, radius, 0, Math.PI * 2, false);
+            ctx.closePath();
+            ctx.fill();
+        }
+
+        function drawScore() {
+            ctx.font = "20px Arial";
+            ctx.fillText(score.left, canvas.width / 4, 30);
+            ctx.fillText(score.right, (3 * canvas.width) / 4, 30);
+        }
+
+        function update() {
+            ball.x += ball.dx;
+            ball.y += ball.dy;
+
+            if (ball.y + ball.radius > canvas.height || ball.y - ball.radius < 0) {
+                ball.dy *= -1;
+            }
+
+            // Paddle collision
+            if (ball.x - ball.radius < leftPaddle.x + leftPaddle.width && ball.y > leftPaddle.y && ball.y < leftPaddle.y + leftPaddle.height) {
+                ball.dx *= -1;
+            }
+
+            if (ball.x + ball.radius > rightPaddle.x && ball.y > rightPaddle.y && ball.y < rightPaddle.y + rightPaddle.height) {
+                ball.dx *= -1;
+            }
+
+            // Score points
+            if (ball.x + ball.radius < 0) {
+                score.right++;
+                resetBall();
+            }
+            if (ball.x - ball.radius > canvas.width) {
+                score.left++;
+                resetBall();
+            }
+        }
+
+        function resetBall() {
+            ball.x = canvas.width / 2;
+            ball.y = canvas.height / 2;
+            ball.dx = 5 * (Math.random() > 0.5 ? 1 : -1);
+            ball.dy = 5 * (Math.random() > 0.5 ? 1 : -1);
+        }
+
+        function updatePaddles() {
+            // AI for right paddle
+            rightPaddleY += (ball.y - (rightPaddleY + paddleHeight / 2)) * 0.1;
+            rightPaddleY = Math.max(Math.min(rightPaddleY, canvas.height - paddleHeight), 0);
+
+            leftPaddle.y = leftPaddleY;
+            rightPaddle.y = rightPaddleY;
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawRect(leftPaddle.x, leftPaddle.y, leftPaddle.width, leftPaddle.height, leftPaddle.color);
+            drawRect(rightPaddle.x, rightPaddle.y, rightPaddle.width, rightPaddle.height, rightPaddle.color);
+            drawBall(ball.x, ball.y, ball.radius, ball.color);
+            drawScore();
+        }
+
+        function loop() {
+            update();
+            updatePaddles();
+            draw();
+            requestAnimationFrame(loop);
+        }
+
+        document.addEventListener("mousemove", (event) => {
+            leftPaddleY = event.clientY - canvas.getBoundingClientRect().top - leftPaddle.height / 2;
+            leftPaddleY = Math.max(Math.min(leftPaddleY, canvas.height - paddleHeight), 0);
+        });
+
+        document.addEventListener("keydown", (event) => {
+            if (event.key === "ArrowUp") {
+                leftPaddleY -= 20;
+            }
+            if (event.key === "ArrowDown") {
+                leftPaddleY += 20;
+            }
+        });
+
+        loop();
+    </script>
+</body>
+</html>
